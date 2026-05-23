@@ -9,13 +9,15 @@ from groq import Groq
 from PIL import Image
 from io import BytesIO
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
 app = FastAPI(title="LR Scanner")
 
-# Ensure templates directory exists
-templates = Jinja2Templates(directory="templates")
+# Use absolute path for Vercel, and look for index.html directly in the main folder
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR))
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
@@ -26,12 +28,10 @@ else:
 
 def get_lr_number(image_bytes: bytes) -> str:
     if not client:
-        return "64116_dummy"  # Fallback if no API key
+        return "64116_dummy"
 
-    # Convert bytes to base64
     base64_image = base64.b64encode(image_bytes).decode('utf-8')
     
-    # Prompt the vision model
     prompt = "Look at the top right corner where it says 'NON NEGOTIABLE WAY BILL'. There is a number below it (e.g., 64116). Extract that exact number. Reply with ONLY the number and no other text."
     
     chat_completion = client.chat.completions.create(
@@ -53,8 +53,6 @@ def get_lr_number(image_bytes: bytes) -> str:
     )
     
     response_text = chat_completion.choices[0].message.content.strip()
-    
-    # Clean the response to ensure we only get valid characters (alphanumeric and dashes)
     cleaned_number = re.sub(r'[^a-zA-Z0-9-]', '', response_text)
     
     if not cleaned_number:
@@ -69,18 +67,13 @@ async def home(request: Request):
 @app.post("/scan")
 async def scan_lr(image: UploadFile = File(...)):
     contents = await image.read()
-    
-    # Extract number
     lr_number = get_lr_number(contents)
     
-    # Convert image to PDF
     img = Image.open(BytesIO(contents))
     
-    # Convert to RGB to ensure compatibility with PDF saving
     if img.mode != 'RGB':
         img = img.convert('RGB')
         
-    # Create a temporary file to store the PDF
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     pdf_path = temp_pdf.name
     temp_pdf.close()
@@ -93,5 +86,5 @@ async def scan_lr(image: UploadFile = File(...)):
         path=pdf_path, 
         filename=filename, 
         media_type="application/pdf",
-        background=None  # We could delete the file in background
+        background=None
     )
