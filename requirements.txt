@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-multipart
+groq
+Pillow
+jinja2
+python-dotenv
