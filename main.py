@@ -7,10 +7,11 @@ from io import BytesIO
 from pathlib import Path
 from PIL import Image
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile, Request, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, Request, BackgroundTasks, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from groq import Groq
+import httpx
 
 # Configure logging to stdout for Vercel logs visibility
 logging.basicConfig(
@@ -39,6 +40,46 @@ if GROQ_API_KEY:
 else:
     logger.warning("GROQ_API_KEY not found in environment. Groq client is disabled.")
     client = None
+
+def upload_to_google_drive_background(
+    pdf_path: str, 
+    filename: str, 
+    apps_script_url: str, 
+    drive_folder_url: str
+):
+    """
+    Quietly uploads the generated PDF to the user's personal Google Drive folder
+    via their Google Apps Script Web App. Run as a FastAPI background task.
+    """
+    try:
+        logger.info(f"Google Drive background upload initiated for file: {filename}")
+        if not os.path.exists(pdf_path):
+            logger.error("PDF path not found on disk. Cancelling Drive upload.")
+            return
+
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        base64_data = base64.b64encode(pdf_bytes).decode("utf-8")
+        
+        payload = {
+            "base64Data": base64_data,
+            "filename": filename,
+            "folderUrl": drive_folder_url
+        }
+        
+        logger.info(f"Sending payload to Google Apps Script: {apps_script_url}")
+        
+        # Follow redirects is crucial for Apps Script web apps (redirects from script.google.com to googleusercontent.com)
+        r = httpx.post(apps_script_url, json=payload, timeout=40.0, follow_redirects=True)
+        
+        if r.status_code == 200:
+            logger.info(f"Google Drive upload successful! Response: {r.text}")
+        else:
+            logger.error(f"Google Drive upload failed with HTTP {r.status_code}: {r.text}")
+            
+    except Exception as e:
+        logger.error(f"Unexpected error during Google Drive background upload: {e}", exc_info=True)
 
 def get_lr_number(image_bytes: bytes) -> str:
     """
@@ -123,9 +164,20 @@ async def home(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
 @app.post("/scan")
-async def scan_lr(background_tasks: BackgroundTasks, image: UploadFile = File(...)):
+async def scan_lr(
+    background_tasks: BackgroundTasks, 
+    image: UploadFile = File(...),
+    drive_folder_url: str = Form(None),
+    apps_script_url: str = Form(None)
+):
     logger.info(f"Received /scan request. File: {image.filename}, Content-Type: {image.content_type}")
     
+    # Log Google Drive settings status
+    if apps_script_url and drive_folder_url:
+        logger.info("Google Drive integration parameters received.")
+    else:
+        logger.info("Google Drive integration parameters not supplied.")
+
     try:
         contents = await image.read()
         if not contents:
@@ -184,6 +236,16 @@ async def scan_lr(background_tasks: BackgroundTasks, image: UploadFile = File(..
     filename = f"{lr_number}.pdf"
     logger.info(f"PDF generated successfully. Prepared download: {filename}")
     
+    # 4. Trigger Google Drive upload in the background if configured (doesn't block user download!)
+    if apps_script_url and drive_folder_url:
+        background_tasks.add_task(
+            upload_to_google_drive_background,
+            pdf_path,
+            filename,
+            apps_script_url,
+            drive_folder_url
+        )
+
     # Safe cleanup function to delete temp PDF from Vercel's serverless environment after download completes
     def remove_file(path: str):
         try:
@@ -201,6 +263,10 @@ async def scan_lr(background_tasks: BackgroundTasks, image: UploadFile = File(..
         "Access-Control-Expose-Headers": "Content-Disposition"
     }
     
+    if apps_script_url and drive_folder_url:
+        # Inform the frontend that a Google Drive backup was triggered
+        headers["X-Google-Drive-Upload"] = "triggered"
+
     return FileResponse(
         path=pdf_path, 
         filename=filename, 
