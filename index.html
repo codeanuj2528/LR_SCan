@@ -8,13 +8,17 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         :root {
-            --bg-color: #0f172a;
-            --surface-color: #1e293b;
+            --bg-color: #0b0f19;
+            --surface-color: #151d30;
             --primary-color: #3b82f6;
             --primary-hover: #2563eb;
+            --primary-light: rgba(59, 130, 246, 0.12);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: #334155;
+            --border-color: #24324f;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
         }
 
         body {
@@ -26,108 +30,169 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
         }
 
         .container {
             background-color: var(--surface-color);
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+            padding: 2.25rem 1.75rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
             border: 1px solid var(--border-color);
+            box-sizing: border-box;
         }
 
         h1 {
             margin-top: 0;
-            font-size: 1.5rem;
-            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.65rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        p {
+        .subtitle {
             color: var(--text-muted);
             margin-bottom: 2rem;
             font-size: 0.875rem;
             line-height: 1.5;
         }
 
-        .upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 0.75rem;
-            padding: 2rem 1rem;
+        /* Modern Actions Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
             margin-bottom: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
         }
 
-        .upload-area:hover {
+        .action-card {
+            background-color: var(--primary-light);
+            border: 1.5px solid var(--border-color);
+            border-radius: 0.85rem;
+            padding: 1.25rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .action-card:hover {
             border-color: var(--primary-color);
-            background-color: rgba(59, 130, 246, 0.05);
+            background-color: rgba(59, 130, 246, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        
+        .action-card:active {
+            transform: translateY(0);
         }
 
-        .upload-area input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2; /* Put it on top of icon and text for mobile touches */
+        .action-card.secondary {
+            background-color: rgba(255, 255, 255, 0.02);
         }
 
-        .upload-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+        .action-card.secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-muted);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .action-icon {
+            font-size: 2.25rem;
+        }
+
+        .action-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .action-desc {
+            font-size: 0.75rem;
             color: var(--text-muted);
         }
 
+        /* Image Preview Frame */
+        .preview-frame {
+            display: none;
+            border: 1px dashed var(--border-color);
+            border-radius: 0.85rem;
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
+            background-color: rgba(0, 0, 0, 0.25);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        #preview {
+            max-width: 100%;
+            max-height: 220px;
+            border-radius: 0.6rem;
+            display: block;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+
+        /* Action Submit Button */
         .btn {
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+            padding: 0.9rem 1.5rem;
+            border-radius: 0.6rem;
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 650;
             cursor: pointer;
             width: 100%;
-            transition: background-color 0.2s ease;
-            display: flex;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none; /* Hidden until image is picked */
             justify-content: center;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.6rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .btn:hover {
             background-color: var(--primary-hover);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .btn:disabled {
             background-color: var(--border-color);
             cursor: not-allowed;
             color: var(--text-muted);
-        }
-
-        #preview {
-            max-width: 100%;
-            max-height: 200px;
-            margin-top: 1rem;
-            border-radius: 0.5rem;
-            display: none;
-            object-fit: contain;
+            box-shadow: none;
+            transform: none;
         }
 
         .spinner {
             display: none;
-            width: 1.25rem;
-            height: 1.25rem;
+            width: 1.2rem;
+            height: 1.2rem;
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: white;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -135,10 +200,15 @@
         }
         
         #status-message {
-            margin-top: 1rem;
+            margin-top: 1.25rem;
             font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.4;
             color: var(--primary-color);
             display: none;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            animation: fadeIn 0.2s ease;
         }
     </style>
 </head>
@@ -146,16 +216,33 @@
 
     <div class="container">
         <h1>LR Scanner</h1>
-        <p>Take a photo or upload a Lorry Receipt. We'll extract the waybill number and generate a PDF.</p>
+        <div class="subtitle">Select an option to scan your Lorry Receipt and instantly generate a PDF waybill.</div>
+
+        <!-- Hidden inputs configured perfectly for both Camera and Gallery uploads -->
+        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="gallery-input" accept="image/*" style="display:none;">
 
         <form id="upload-form">
-            <div class="upload-area" id="drop-area">
-                <div class="upload-icon">📸</div>
-                <div>Tap to snap a photo or select an image</div>
-                <input type="file" id="image-input" name="image" accept="image/*" required>
-                <img id="preview" alt="Preview">
+            <!-- Modern Action Grid Buttons -->
+            <div class="actions-grid" id="actions-container">
+                <div class="action-card" id="camera-btn">
+                    <span class="action-icon">📸</span>
+                    <span class="action-title">Take Photo</span>
+                    <span class="action-desc">Open phone camera</span>
+                </div>
+                <div class="action-card secondary" id="gallery-btn">
+                    <span class="action-icon">📁</span>
+                    <span class="action-title">Choose File</span>
+                    <span class="action-desc">Upload from gallery</span>
+                </div>
             </div>
 
+            <!-- Receipt Preview frame -->
+            <div class="preview-frame" id="preview-frame">
+                <img id="preview" alt="LR Receipt Preview">
+            </div>
+
+            <!-- Submit Button (shown only after file selected) -->
             <button type="submit" id="submit-btn" class="btn">
                 <div class="spinner" id="spinner"></div>
                 <span id="btn-text">Scan and Convert</span>
@@ -166,7 +253,11 @@
     </div>
 
     <script>
-        const imageInput = document.getElementById('image-input');
+        const cameraInput = document.getElementById('camera-input');
+        const galleryInput = document.getElementById('gallery-input');
+        const cameraBtn = document.getElementById('camera-btn');
+        const galleryBtn = document.getElementById('gallery-btn');
+        const previewFrame = document.getElementById('preview-frame');
         const preview = document.getElementById('preview');
         const form = document.getElementById('upload-form');
         const submitBtn = document.getElementById('submit-btn');
@@ -174,19 +265,40 @@
         const btnText = document.getElementById('btn-text');
         const statusMessage = document.getElementById('status-message');
 
-        imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
+        let selectedFile = null;
+
+        // Trigger native device actions on card tap
+        cameraBtn.addEventListener('click', () => {
+            cameraInput.click();
+        });
+
+        galleryBtn.addEventListener('click', () => {
+            galleryInput.click();
+        });
+
+        // Capture files from camera input
+        cameraInput.addEventListener('change', function(e) {
+            handleFileSelection(e.target.files[0]);
+        });
+
+        // Capture files from gallery input
+        galleryInput.addEventListener('change', function(e) {
+            handleFileSelection(e.target.files[0]);
+        });
+
+        // Standardized File selection logic
+        function handleFileSelection(file) {
             if (file) {
+                selectedFile = file;
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    document.querySelector('.upload-icon').style.display = 'none';
-                    document.querySelector('.upload-area div:nth-child(2)').style.display = 'none';
+                    previewFrame.style.display = 'block';
+                    submitBtn.style.display = 'flex'; // Reveal the scan button!
                 }
                 reader.readAsDataURL(file);
             }
-        });
+        }
 
         // Client-side image compression to maximize network speed on mobile connections
         function compressImage(file, maxWidth, maxHeight, quality) {
@@ -235,8 +347,7 @@
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const file = imageInput.files[0];
-            if (!file) return;
+            if (!selectedFile) return;
 
             // Update UI to loading state immediately
             submitBtn.disabled = true;
@@ -248,7 +359,7 @@
 
             try {
                 // Compress image to max 1600px width/height, 80% quality (reduces size from 8MB to ~250KB in milliseconds!)
-                const compressedBlob = await compressImage(file, 1600, 1600, 0.8);
+                const compressedBlob = await compressImage(selectedFile, 1600, 1600, 0.8);
                 
                 btnText.textContent = 'Uploading...';
                 statusMessage.textContent = 'Uploading and scanning waybill number...';
@@ -302,22 +413,24 @@
                 
                 if (filename === 'LR_scanned.pdf') {
                     statusMessage.textContent = 'PDF generated! (LR number could not be read; saved as LR_scanned.pdf)';
-                    statusMessage.style.color = '#f59e0b'; // Amber/Yellow
+                    statusMessage.style.color = 'var(--accent-yellow)';
                 } else {
                     statusMessage.textContent = `Success! Downloaded ${filename}`;
-                    statusMessage.style.color = '#10b981'; // Green
+                    statusMessage.style.color = 'var(--accent-green)';
                 }
 
-                // Reset preview and file input immediately so they can scan the next one!
+                // Reset preview and state immediately so they can scan the next one!
                 form.reset();
-                preview.style.display = 'none';
-                document.querySelector('.upload-icon').style.display = 'block';
-                document.querySelector('.upload-area div:nth-child(2)').style.display = 'block';
+                selectedFile = null;
+                previewFrame.style.display = 'none';
+                submitBtn.style.display = 'none';
+                cameraInput.value = '';
+                galleryInput.value = '';
 
             } catch (error) {
                 console.error('Error:', error);
                 statusMessage.textContent = error.message || 'An error occurred during scanning.';
-                statusMessage.style.color = '#ef4444'; // Red
+                statusMessage.style.color = 'var(--accent-red)';
             } finally {
                 // Enable button instantly so they can snap the next photo right away
                 submitBtn.disabled = false;
