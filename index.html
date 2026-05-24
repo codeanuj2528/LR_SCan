@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LR Scanner</title>
+    <!-- Cropper.js CSS for touchscreen-friendly cropping and rotation -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
@@ -36,19 +38,28 @@
 
         .container {
             background-color: var(--surface-color);
-            padding: 2.25rem 1.75rem;
+            padding: 2rem 1.5rem;
             border-radius: 1.25rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             text-align: center;
             border: 1px solid var(--border-color);
             box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Premium Header with Settings Toggle */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
         }
 
         h1 {
-            margin-top: 0;
-            margin-bottom: 0.5rem;
+            margin: 0;
             font-size: 1.65rem;
             font-weight: 700;
             letter-spacing: -0.025em;
@@ -57,11 +68,110 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .settings-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .settings-toggle:hover {
+            color: var(--primary-color);
+            transform: rotate(45deg);
+        }
+
         .subtitle {
             color: var(--text-muted);
-            margin-bottom: 2rem;
-            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
             line-height: 1.5;
+            text-align: left;
+        }
+
+        /* Collapsible Settings Panel */
+        .settings-panel {
+            display: none;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 0.85rem;
+            padding: 1.25rem 1rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+            animation: slideDown 0.25s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .form-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            background-color: #0b0f19;
+            border: 1.5px solid var(--border-color);
+            border-radius: 0.4rem;
+            padding: 0.5rem;
+            box-sizing: border-box;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .guide-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .guide-content {
+            display: none;
+            background-color: rgba(255, 255, 255, 0.02);
+            border-radius: 0.4rem;
+            padding: 0.6rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            border-left: 2px solid var(--primary-color);
+            margin-bottom: 0.5rem;
         }
 
         /* Modern Actions Grid */
@@ -123,29 +233,64 @@
             color: var(--text-muted);
         }
 
-        /* Image Preview Frame */
+        /* Image Cropper Frame */
         .preview-frame {
             display: none;
-            border: 1px dashed var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 0.85rem;
-            padding: 0.5rem;
-            margin-bottom: 1.5rem;
-            background-color: rgba(0, 0, 0, 0.25);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+            padding: 0.4rem;
+            margin-bottom: 1rem;
+            background-color: rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            box-sizing: border-box;
         }
 
         #preview {
             max-width: 100%;
-            max-height: 220px;
-            border-radius: 0.6rem;
+            max-height: 300px;
             display: block;
             margin: 0 auto;
-            object-fit: contain;
+        }
+
+        /* Cropper control buttons toolbar */
+        .cropper-toolbar {
+            display: none;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-main);
+            padding: 0.65rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: var(--text-muted);
+        }
+
+        .btn-secondary.danger {
+            background-color: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+        }
+
+        .btn-secondary.danger:hover {
+            background-color: rgba(239, 68, 68, 0.15);
+            border-color: var(--accent-red);
         }
 
         /* Action Submit Button */
@@ -215,10 +360,43 @@
 <body>
 
     <div class="container">
-        <h1>LR Scanner</h1>
-        <div class="subtitle">Select an option to scan your Lorry Receipt and instantly generate a PDF waybill.</div>
+        <!-- Premium Header -->
+        <div class="header-bar">
+            <h1>LR Scanner</h1>
+            <button type="button" class="settings-toggle" id="settings-btn" title="Google Drive Settings">⚙️</button>
+        </div>
+        <div class="subtitle" id="main-subtitle">Choose an option to scan your receipt. You can crop and rotate it next.</div>
 
-        <!-- Hidden inputs configured perfectly for both Camera and Gallery uploads -->
+        <!-- Google Drive Config Panel (Stored in localStorage once!) -->
+        <div class="settings-panel" id="settings-panel">
+            <div class="settings-title">☁️ Google Drive Connection</div>
+            <div class="form-group">
+                <label for="drive-folder-url">Google Drive Folder Link</label>
+                <input type="text" id="drive-folder-url" placeholder="https://drive.google.com/drive/folders/...">
+            </div>
+            <div class="form-group">
+                <label for="apps-script-url">Google Apps Script Web App URL</label>
+                <input type="text" id="apps-script-url" placeholder="https://script.google.com/macros/s/.../exec">
+            </div>
+            
+            <button type="button" class="guide-btn" id="guide-btn">How to set this up in 1 minute?</button>
+            <div class="guide-content" id="guide-content">
+                1. Go to <b>script.google.com</b> and click <b>New Project</b>.<br>
+                2. Paste this code and save:<br>
+                <code style="display:block; background:#000; padding:4px; margin:4px 0; border-radius:4px; font-size:0.6rem; user-select:all; overflow-x:auto;">
+function doPost(e){var d=JSON.parse(e.postData.contents);var fId=d.folderUrl.match(/folders\/([a-zA-Z0-9-_]+)/)?d.folderUrl.match(/folders\/([a-zA-Z0-9-_]+)/)[1]:d.folderUrl;var f=DriveApp.getFolderById(fId);var b=Utilities.newBlob(Utilities.base64Decode(d.base64Data),'application/pdf',d.filename);var file=f.createFile(b);return ContentService.createTextOutput(JSON.stringify({status:'success'})).setMimeType(ContentService.MimeType.JSON);}
+                </code>
+                3. Click <b>Deploy > New Deployment</b>. Select <b>Web App</b>.<br>
+                4. Set "Execute as" to <b>Me</b>, "Who has access" to <b>Anyone</b>.<br>
+                5. Click Deploy, copy the <b>Web App URL</b> and paste above!
+            </div>
+            
+            <button type="button" class="btn-secondary" id="save-settings-btn" style="width:100%; margin-top:0.5rem; background-color:rgba(59,130,246,0.15); border-color:var(--primary-color);">
+                💾 Save Settings
+            </button>
+        </div>
+
+        <!-- Hidden inputs for mobile uploads -->
         <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
         <input type="file" id="gallery-input" accept="image/*" style="display:none;">
 
@@ -237,21 +415,33 @@
                 </div>
             </div>
 
-            <!-- Receipt Preview frame -->
+            <!-- Receipt Crop Frame -->
             <div class="preview-frame" id="preview-frame">
                 <img id="preview" alt="LR Receipt Preview">
             </div>
 
-            <!-- Submit Button (shown only after file selected) -->
+            <!-- Cropper Controls (Rotate, Cancel) -->
+            <div class="cropper-toolbar" id="cropper-controls">
+                <button type="button" class="btn-secondary" id="rotate-btn">
+                    🔄 Rotate 90°
+                </button>
+                <button type="button" class="btn-secondary danger" id="cancel-crop-btn">
+                    ❌ Cancel
+                </button>
+            </div>
+
+            <!-- Submit Button (shown only after image is loaded in cropper) -->
             <button type="submit" id="submit-btn" class="btn">
                 <div class="spinner" id="spinner"></div>
-                <span id="btn-text">Scan and Convert</span>
+                <span id="btn-text">Crop & Scan Receipt ✂️</span>
             </button>
         </form>
         
         <div id="status-message">Processing... This might take a few seconds.</div>
     </div>
 
+    <!-- Cropper.js JavaScript for touchscreen cropping & rotation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <script>
         const cameraInput = document.getElementById('camera-input');
         const galleryInput = document.getElementById('gallery-input');
@@ -264,10 +454,54 @@
         const spinner = document.getElementById('spinner');
         const btnText = document.getElementById('btn-text');
         const statusMessage = document.getElementById('status-message');
+        const actionsContainer = document.getElementById('actions-container');
+        const cropperControls = document.getElementById('cropper-controls');
+        const rotateBtn = document.getElementById('rotate-btn');
+        const cancelCropBtn = document.getElementById('cancel-crop-btn');
+        const mainSubtitle = document.getElementById('main-subtitle');
 
+        // Settings Panel Elements
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const driveFolderUrlInput = document.getElementById('drive-folder-url');
+        const appsScriptUrlInput = document.getElementById('apps-script-url');
+        const guideBtn = document.getElementById('guide-btn');
+        const guideContent = document.getElementById('guide-content');
+
+        let cropper = null;
         let selectedFile = null;
 
-        // Trigger native device actions on card tap
+        // Load saved Google Drive configuration on launch
+        driveFolderUrlInput.value = localStorage.getItem('driveFolderUrl') || '';
+        appsScriptUrlInput.value = localStorage.getItem('appsScriptUrl') || '';
+
+        // Settings Toggles
+        settingsBtn.addEventListener('click', () => {
+            const isVisible = settingsPanel.style.display === 'block';
+            settingsPanel.style.display = isVisible ? 'none' : 'block';
+        });
+
+        guideBtn.addEventListener('click', () => {
+            const isVisible = guideContent.style.display === 'block';
+            guideContent.style.display = isVisible ? 'none' : 'block';
+        });
+
+        saveSettingsBtn.addEventListener('click', () => {
+            localStorage.setItem('driveFolderUrl', driveFolderUrlInput.value.trim());
+            localStorage.setItem('appsScriptUrl', appsScriptUrlInput.value.trim());
+            
+            // Visual feedback
+            saveSettingsBtn.textContent = '💾 Saved!';
+            saveSettingsBtn.style.color = 'var(--accent-green)';
+            setTimeout(() => {
+                saveSettingsBtn.textContent = '💾 Save Settings';
+                saveSettingsBtn.style.color = '';
+                settingsPanel.style.display = 'none';
+            }, 1200);
+        });
+
+        // Trigger native device camera/gallery on card tap
         cameraBtn.addEventListener('click', () => {
             cameraInput.click();
         });
@@ -276,172 +510,190 @@
             galleryInput.click();
         });
 
-        // Capture files from camera input
-        cameraInput.addEventListener('change', function(e) {
-            handleFileSelection(e.target.files[0]);
-        });
+        // Receive device captures
+        cameraInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0]));
+        galleryInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0]));
 
-        // Capture files from gallery input
-        galleryInput.addEventListener('change', function(e) {
-            handleFileSelection(e.target.files[0]);
-        });
-
-        // Standardized File selection logic
+        // Load Cropper.js on Image Input
         function handleFileSelection(file) {
             if (file) {
                 selectedFile = file;
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    // Clean up prior cropper instance if any
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+                    
                     preview.src = e.target.result;
                     previewFrame.style.display = 'block';
-                    submitBtn.style.display = 'flex'; // Reveal the scan button!
-                }
+                    actionsContainer.style.display = 'none'; // Hide picker cards
+                    cropperControls.style.display = 'flex'; // Show Rotate/Cancel buttons
+                    submitBtn.style.display = 'flex'; // Reveal crop and scan button
+                    mainSubtitle.textContent = 'Rotate receipt upright (critical for OCR) and adjust corners to frame receipt nicely.';
+
+                    // Initialize Cropper.js
+                    cropper = new Cropper(preview, {
+                        aspectRatio: NaN, // Free aspect ratio cropping
+                        viewMode: 1,
+                        autoCropArea: 0.95,
+                        responsive: true,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                };
                 reader.readAsDataURL(file);
             }
         }
 
-        // Client-side image compression to maximize network speed on mobile connections
-        function compressImage(file, maxWidth, maxHeight, quality) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
+        // Toolbar Button Event Handlers
+        rotateBtn.addEventListener('click', () => {
+            if (cropper) cropper.rotate(90);
+        });
 
-                        if (width > height) {
-                            if (width > maxWidth) {
-                                height = Math.round((height * maxWidth) / width);
-                                width = maxWidth;
-                            }
-                        } else {
-                            if (height > maxHeight) {
-                                width = Math.round((width * maxHeight) / height);
-                                height = maxHeight;
-                            }
-                        }
+        cancelCropBtn.addEventListener('click', () => {
+            resetInterface();
+        });
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        canvas.toBlob(
-                            (blob) => {
-                                resolve(blob);
-                            },
-                            'image/jpeg',
-                            quality
-                        );
-                    };
-                    img.onerror = (err) => reject(err);
-                };
-                reader.onerror = (err) => reject(err);
-            });
+        function resetInterface() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            previewFrame.style.display = 'none';
+            cropperControls.style.display = 'none';
+            submitBtn.style.display = 'none';
+            actionsContainer.style.display = 'grid'; // Re-show main picker cards
+            mainSubtitle.textContent = 'Choose an option to scan your receipt. You can crop and rotate it next.';
+            cameraInput.value = '';
+            galleryInput.value = '';
+            selectedFile = null;
         }
 
+        // Form Submit handler
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            if (!selectedFile) return;
+            if (!cropper) return;
 
-            // Update UI to loading state immediately
+            // Lock UI and show processing state
             submitBtn.disabled = true;
             spinner.style.display = 'block';
-            btnText.textContent = 'Compressing...';
+            btnText.textContent = 'Cropping...';
             statusMessage.style.display = 'block';
-            statusMessage.textContent = 'Preparing image for fast upload...';
+            statusMessage.textContent = 'Cropping receipt image...';
             statusMessage.style.color = 'var(--primary-color)';
 
-            try {
-                // Compress image to max 1600px width/height, 80% quality (reduces size from 8MB to ~250KB in milliseconds!)
-                const compressedBlob = await compressImage(selectedFile, 1600, 1600, 0.8);
-                
-                btnText.textContent = 'Uploading...';
-                statusMessage.textContent = 'Uploading and scanning waybill number...';
+            // 1. Get Cropped Canvas (Limit max dimensions to 2000px to guarantee speed and clarity)
+            const croppedCanvas = cropper.getCroppedCanvas({
+                maxWidth: 2000,
+                maxHeight: 2000,
+                imageSmoothingQuality: 'high'
+            });
 
-                const formData = new FormData();
-                formData.append('image', compressedBlob, 'receipt.jpg');
+            // 2. Export cropped canvas as JPEG blob
+            croppedCanvas.toBlob(async (croppedBlob) => {
+                try {
+                    btnText.textContent = 'Uploading...';
+                    statusMessage.textContent = 'Scanning waybill number & generating PDF...';
 
-                const response = await fetch('/scan', {
-                    method: 'POST',
-                    body: formData
-                });
+                    const formData = new FormData();
+                    formData.append('image', croppedBlob, 'receipt.jpg');
 
-                if (!response.ok) {
-                    let errorMessage = 'Scanning failed.';
-                    try {
-                        const errJson = await response.json();
-                        if (errJson && errJson.message) {
-                            errorMessage = errJson.message;
-                        }
-                    } catch (e) {
+                    // 3. Attach Google Drive parameters if user linked their folder
+                    const driveFolderUrl = localStorage.getItem('driveFolderUrl') || '';
+                    const appsScriptUrl = localStorage.getItem('appsScriptUrl') || '';
+                    if (driveFolderUrl && appsScriptUrl) {
+                        formData.append('drive_folder_url', driveFolderUrl);
+                        formData.append('apps_script_url', appsScriptUrl);
+                    }
+
+                    const response = await fetch('/scan', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        let errorMessage = 'Scanning failed.';
                         try {
-                            const errText = await response.text();
-                            if (errText) errorMessage = errText;
-                        } catch (textErr) {}
+                            const errJson = await response.json();
+                            if (errJson && errJson.message) {
+                                errorMessage = errJson.message;
+                            }
+                        } catch (e) {
+                            try {
+                                const errText = await response.text();
+                                if (errText) errorMessage = errText;
+                            } catch (textErr) {}
+                        }
+                        throw new Error(errorMessage);
                     }
-                    throw new Error(errorMessage);
-                }
 
-                // Get the filename from the Content-Disposition header if possible
-                let filename = 'LR_scanned.pdf';
-                const disposition = response.headers.get('Content-Disposition');
-                if (disposition && disposition.indexOf('filename=') !== -1) {
-                    const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
-                    if (matches != null && matches[1]) { 
-                        filename = matches[1].replace(/['"]/g, '');
+                    // 4. Retrieve filename from response header
+                    let filename = 'LR_scanned.pdf';
+                    const disposition = response.headers.get('Content-Disposition');
+                    if (disposition && disposition.indexOf('filename=') !== -1) {
+                        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                        if (matches != null && matches[1]) { 
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
                     }
+
+                    const isGoogleDriveTriggered = response.headers.get('X-Google-Drive-Upload') === 'triggered';
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    
+                    // 5. Trigger browser client PDF download
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    // 6. Update visual status messages
+                    if (isGoogleDriveTriggered) {
+                        statusMessage.textContent = `Success! Downloaded ${filename} & saved directly to Google Drive! ☁️`;
+                        statusMessage.style.color = 'var(--accent-green)';
+                    } else if (filename === 'LR_scanned.pdf') {
+                        statusMessage.textContent = 'PDF generated! (LR number could not be read; saved as LR_scanned.pdf)';
+                        statusMessage.style.color = 'var(--accent-yellow)';
+                    } else {
+                        statusMessage.textContent = `Success! Downloaded ${filename}`;
+                        statusMessage.style.color = 'var(--accent-green)';
+                    }
+
+                    // 7. Instantly reset the interface so they can immediately scan the next receipt!
+                    resetInterface();
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    statusMessage.textContent = error.message || 'An error occurred during scanning.';
+                    statusMessage.style.color = 'var(--accent-red)';
+                    submitBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    btnText.textContent = 'Crop & Scan Receipt ✂️';
+                } finally {
+                    // Enable button instantly and remove loader
+                    submitBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    btnText.textContent = 'Crop & Scan Receipt ✂️';
+                    
+                    // Fade out status message after 8 seconds
+                    setTimeout(() => {
+                        statusMessage.style.display = 'none';
+                    }, 8000);
                 }
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                
-                // Create a temporary link to trigger download
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                
-                if (filename === 'LR_scanned.pdf') {
-                    statusMessage.textContent = 'PDF generated! (LR number could not be read; saved as LR_scanned.pdf)';
-                    statusMessage.style.color = 'var(--accent-yellow)';
-                } else {
-                    statusMessage.textContent = `Success! Downloaded ${filename}`;
-                    statusMessage.style.color = 'var(--accent-green)';
-                }
-
-                // Reset preview and state immediately so they can scan the next one!
-                form.reset();
-                selectedFile = null;
-                previewFrame.style.display = 'none';
-                submitBtn.style.display = 'none';
-                cameraInput.value = '';
-                galleryInput.value = '';
-
-            } catch (error) {
-                console.error('Error:', error);
-                statusMessage.textContent = error.message || 'An error occurred during scanning.';
-                statusMessage.style.color = 'var(--accent-red)';
-            } finally {
-                // Enable button instantly so they can snap the next photo right away
-                submitBtn.disabled = false;
-                spinner.style.display = 'none';
-                btnText.textContent = 'Scan and Convert';
-                
-                // Hide success or error status message after 7 seconds
-                setTimeout(() => {
-                    statusMessage.style.display = 'none';
-                }, 7000);
-            }
+            }, 'image/jpeg', 0.85);
         });
     </script>
 </body>
