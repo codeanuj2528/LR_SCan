@@ -50,11 +50,26 @@ def get_lr_number(image_bytes: bytes) -> str:
         return "LR_scanned"
 
     try:
-        # Convert bytes to base64
-        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        # Load image and compress/resize to max 800px for extremely fast API processing
+        logger.info(f"Compressing image for API payload. Original size: {len(image_bytes)} bytes.")
+        img = Image.open(BytesIO(image_bytes))
+        img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        buffered = BytesIO()
+        img.save(buffered, format="JPEG", quality=70)
+        api_image_bytes = buffered.getvalue()
+        logger.info(f"Compressed size for Groq API: {len(api_image_bytes)} bytes.")
+        
+        base64_image = base64.b64encode(api_image_bytes).decode('utf-8')
     except Exception as e:
-        logger.error(f"Failed to encode image to base64: {e}", exc_info=True)
-        return "LR_scanned"
+        logger.error(f"Failed to compress image for API: {e}", exc_info=True)
+        # Fallback to original bytes
+        try:
+            base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        except Exception:
+            return "LR_scanned"
     
     # Prompt the vision model
     prompt = (
