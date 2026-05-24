@@ -75,6 +75,7 @@
             height: 100%;
             opacity: 0;
             cursor: pointer;
+            z-index: 2; /* Put it on top of icon and text for mobile touches */
         }
 
         .upload-icon {
@@ -151,7 +152,7 @@
             <div class="upload-area" id="drop-area">
                 <div class="upload-icon">📸</div>
                 <div>Tap to snap a photo or select an image</div>
-                <input type="file" id="image-input" name="image" accept="image/*;capture=camera" required>
+                <input type="file" id="image-input" name="image" accept="image/*" required>
                 <img id="preview" alt="Preview">
             </div>
 
@@ -318,4 +319,17 @@
                 statusMessage.textContent = error.message || 'An error occurred during scanning.';
                 statusMessage.style.color = '#ef4444'; // Red
             } finally {
-                // Enable button instantly so they can snap
+                // Enable button instantly so they can snap the next photo right away
+                submitBtn.disabled = false;
+                spinner.style.display = 'none';
+                btnText.textContent = 'Scan and Convert';
+                
+                // Hide success or error status message after 7 seconds
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 7000);
+            }
+        });
+    </script>
+</body>
+</html>
